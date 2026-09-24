@@ -1,0 +1,37 @@
+{
+  "name": "blackboard",
+  "version": "0.1.0",
+  "description": "Fleet Knowledge Blackboard: a shared, conflict-aware fact store for a fleet of parallel coding agents working the same repository.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "blackboard": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "test:unit": "vitest run test/store.test.ts",
+    "dev": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
+  }
+}
