@@ -131,6 +131,12 @@ export class BlackboardStore {
       mkdirSync(dirname(dbPath), { recursive: true });
     }
     this.db = new DatabaseSync(dbPath);
+    // Without a busy timeout, a second concurrent `blackboard` process
+    // hitting this store while a write is in flight gets an immediate,
+    // uncaught SQLITE_BUSY ("database is locked") instead of waiting for
+    // the lock to clear -- fatal for this tool's actual use case (a fleet
+    // of parallel agent processes all writing to the same store.db).
+    this.db.exec("PRAGMA busy_timeout = 5000;");
     this.db.exec("PRAGMA journal_mode = WAL;");
     this.db.exec(SCHEMA);
   }
@@ -156,8 +162,8 @@ export class BlackboardStore {
       throw new Error("value must be a non-empty string");
     }
     const confidence = input.confidence ?? 0.8;
-    if (confidence < 0 || confidence > 1) {
-      throw new Error("confidence must be between 0 and 1");
+    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
+      throw new Error("confidence must be a number between 0 and 1");
     }
     const agent = input.agent && input.agent.trim() ? input.agent.trim() : "unknown";
     const file = input.file ?? null;
@@ -314,6 +320,9 @@ export class BlackboardStore {
       resolvedClaimId = resolution.keepClaimId;
       resolutionNote = `kept claim ${resolvedClaimId}`;
     } else {
+      if (!resolution.mergeText || !resolution.mergeText.trim()) {
+        throw new ResolveError("--merge text must be a non-empty string");
+      }
       const mergeClaim = this.insertClaimDirect({
         subject: existing.subject,
         value: resolution.mergeText,
